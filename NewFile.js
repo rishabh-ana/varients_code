@@ -3750,7 +3750,6 @@ lazySizesConfig.expFactor = 4;
       this.inner = this.querySelector('[data-tool-tip-inner]');
       this.closeButton = this.querySelector('[data-tool-tip-close]');
       this.toolTipContent = this.querySelector('[data-tool-tip-content]');
-      this.toolTipTitle = this.querySelector('[data-tool-tip-title]');
   
       this.triggers = document.querySelectorAll('[data-tool-tip-trigger]');
   
@@ -3761,11 +3760,6 @@ lazySizesConfig.expFactor = 4;
   
     _open(context, insertedHtml) {
       this.toolTipContent.innerHTML = insertedHtml;
-  
-      // Ensure we set a title for product availability
-      if (context != 'store-availability') {
-        this.toolTipTitle.remove();
-      }
   
       this._lockScrolling();
   
@@ -5067,154 +5061,6 @@ lazySizesConfig.expFactor = 4;
   }
   
 
-  /*============================================================================
-    Age Verification Popup
-  ==============================================================================*/
-  
-  class AgeVerificationPopup extends HTMLElement {
-    constructor() {
-      super();
-  
-      this.cookieName = this.id;
-      this.cookie = Cookies.get(this.cookieName);
-  
-      this.classes = {
-        activeContent: 'age-verification-popup__content--active',
-        inactiveContent: 'age-verification-popup__content--inactive',
-        inactiveDeclineContent: 'age-verification-popup__decline-content--inactive',
-        activeDeclineContent: 'age-verification-popup__decline-content--active',
-      }
-  
-      this.declineButton = this.querySelector('[data-age-verification-popup-decline-button]');
-      this.declineContent = this.querySelector('[data-age-verification-popup-decline-content]');
-      this.content = this.querySelector('[data-age-verification-popup-content]');
-      this.returnButton = this.querySelector('[data-age-verification-popup-return-button]');
-      this.exitButton = this.querySelector('[data-age-verification-popup-exit-button]');
-      this.backgroundImage = this.querySelector('[data-background-image]');
-      this.mobileBackgroundImage = this.querySelector('[data-mobile-background-image]');
-  
-      if (Shopify.designMode) {
-        document.addEventListener('shopify:section:select', (event) => {
-          if (event.detail.sectionId === this.dataset.sectionId) {
-            this.init();
-          }
-        })
-  
-        document.addEventListener('shopify:section:load', (event) => {
-          if (event.detail.sectionId === this.dataset.sectionId) {
-            this.init();
-  
-            // If 'Test mode' is enabled, remove the cookie we've set
-            if (this.dataset.testMode === 'true' && this.cookie) {
-              Cookies.remove(this.cookieName);
-            }
-  
-            // Check session storage if user was editing on the second view
-            const secondViewVisited = sessionStorage.getItem(this.id);
-  
-            if (!secondViewVisited) return;
-  
-            this.showDeclineContent();
-          }
-        })
-      }
-  
-      // Age verification popup will only be hidden if test mode is disabled AND
-      // either a cookie exists OR 'Show age verification popup' setting is unchecked
-      if ((this.cookie || this.dataset.enabled === 'false') && this.dataset.testMode === 'false') return;
-  
-      this.init();
-    }
-  
-    init() {
-      this.modal = new theme.Modals(this.id, 'age-verification-popup-modal', {
-        closeOffContentClick: false
-      });
-  
-      if (this.backgroundImage) {
-        this.backgroundImage.style.display = 'block';
-      }
-  
-      if (theme.config.bpSmall && this.mobileBackgroundImage) {
-        this.mobileBackgroundImage.style.display = 'block';
-      }
-  
-      this.modal.open();
-  
-      theme.a11y.lockMobileScrolling(`#${this.id}`, document.querySelector('#MainContent'));
-  
-      if (this.declineButton) {
-        this.declineButton.addEventListener('click', (e) => {
-          e.preventDefault();
-          this.showDeclineContent();
-  
-          // If in editor, save to session storage to indicate that user has moved on to the second view
-          // Allows view to persist while making changes in the editor
-          if (Shopify.designMode) {
-            sessionStorage.setItem(this.id, 'second-view');
-          }
-        });
-      }
-  
-      if (this.returnButton) {
-        this.returnButton.addEventListener('click', (e) => {
-          e.preventDefault();
-          this.hideDeclineContent();
-  
-          // Remove data from session storage so second view doesn't persist
-          const secondViewVisited = sessionStorage.getItem(this.id);
-  
-          if (Shopify.designMode && secondViewVisited) {
-            sessionStorage.removeItem(this.id);
-          }
-        })
-      }
-  
-      if (this.exitButton) {
-        this.exitButton.addEventListener('click', (e) => {
-          e.preventDefault();
-  
-          // We don't want to set a cookie if in test mode
-          if (this.dataset.testMode === 'false') {
-            Cookies.set(this.cookieName, 'entered', { expires: 30 });
-          }
-  
-          if (this.backgroundImage) {
-            this.backgroundImage.style.display = 'none';
-          }
-  
-          if (theme.config.bpSmall && this.mobileBackgroundImage) {
-            this.mobileBackgroundImage.style.display = 'none';
-          }
-  
-          this.modal.close();
-  
-          theme.a11y.unlockMobileScrolling(`#${this.id}`, document.querySelector('#MainContent'));
-        })
-      }
-    }
-  
-    showDeclineContent() {
-      this.declineContent.classList.remove(this.classes.inactiveDeclineContent);
-      this.declineContent.classList.add(this.classes.activeDeclineContent);
-  
-      this.content.classList.add(this.classes.inactiveContent);
-      this.content.classList.remove(this.classes.activeContent);
-    }
-  
-    hideDeclineContent() {
-      this.declineContent.classList.add(this.classes.inactiveDeclineContent);
-      this.declineContent.classList.remove(this.classes.activeDeclineContent);
-  
-      this.content.classList.remove(this.classes.inactiveContent);
-      this.content.classList.add(this.classes.activeContent);
-    }
-  }
-  
-  customElements.define('age-verification-popup', AgeVerificationPopup);
-  
-  
-  
   theme.Maps = (function() {
     var config = {
       zoom: 14
@@ -6064,316 +5910,6 @@ lazySizesConfig.expFactor = 4;
     return videoSection;
   })();
   
-  /*============================================================================
-    CountdownTimer
-  ==============================================================================*/
-  
-  class CountdownTimer extends HTMLElement {
-    constructor() {
-      super();
-      this.el = this;
-      this.display = this.querySelector('[data-time-display]');
-      this.block = this.closest('.countdown__block--timer');
-      this.year = this.el.dataset.year;
-      this.month = this.el.dataset.month;
-      this.day = this.el.dataset.day;
-      this.hour = this.el.dataset.hour;
-      this.minute = this.el.dataset.minute;
-      this.daysPlaceholder = this.querySelector('[date-days-placeholder]');
-      this.hoursPlaceholder = this.querySelector('[date-hours-placeholder]');
-      this.minutesPlaceholder = this.querySelector('[date-minutes-placeholder]');
-      this.secondsPlaceholder = this.querySelector('[date-seconds-placeholder]');
-      this.messagePlaceholder = this.querySelector('[data-message-placeholder]');
-      this.hideTimerOnComplete = this.el.dataset.hideTimer;
-      this.completeMessage = this.el.dataset.completeMessage;
-  
-      this.timerComplete = false;
-  
-      this.init();
-    }
-  
-    init() {
-      setInterval(() => {
-        if (!this.timerComplete) {
-          this._calculate();
-        }
-      }, 1000);
-  
-    }
-  
-    _calculate() {
-      // Find time difference and convert to integer
-      const timeDifference = +new Date(`${this.year}-${this.month}-${this.day} ${this.hour}:${this.minute}:00`).getTime() - +new Date().getTime();
-  
-      // If time difference is greater than 0, calculate remaining time
-      if (timeDifference > 0) {
-        const intervals = {
-          days: Math.floor(timeDifference / (1000 * 60 * 60 * 24)),
-          hours: Math.floor((timeDifference / (1000 * 60 * 60)) % 24),
-          minutes: Math.floor((timeDifference / 1000 / 60) % 60),
-          seconds: Math.floor((timeDifference / 1000) % 60),
-        };
-  
-        this.daysPlaceholder.innerHTML = intervals.days;
-        this.hoursPlaceholder.innerHTML = intervals.hours;
-        this.minutesPlaceholder.innerHTML = intervals.minutes;
-        this.secondsPlaceholder.innerHTML = intervals.seconds;
-      } else {
-        if (this.completeMessage && this.messagePlaceholder) {
-          this.messagePlaceholder.classList.add('countdown__timer-message--visible');
-        }
-  
-        if (this.hideTimerOnComplete === 'true') {
-          this.display.classList.remove('countdown__display--visible');
-          this.display.classList.add('countdown__display--hidden');
-        }
-  
-        if (!this.completeMessage && this.hideTimerOnComplete === 'true') {
-          this.block.classList.add('countdown__block--hidden');
-        }
-  
-        this.timerComplete = true;
-      }
-    }
-  }
-  
-  customElements.define('countdown-timer', CountdownTimer);
-  
-  /*============================================================================
-    HotSpots
-  ==============================================================================*/
-  
-  class HotSpots extends HTMLElement {
-    constructor() {
-      super();
-      this.el = this;
-      this.buttons = this.querySelectorAll('[data-button]');
-      this.hotspotBlocks = this.querySelectorAll('[data-hotspot-block]');
-      this.blockContainer = this.querySelector('[data-block-container]');
-      this.colorImages = this.querySelectorAll('.grid-product__color-image');
-      this.colorSwatches = this.querySelectorAll('.color-swatch--with-image');
-  
-      this._bindEvents();
-      this._setupQuickShop();
-  
-      if (this.colorImages.length) {
-        this._colorSwatchHovering();
-      }
-    }
-  
-    _colorSwatchHovering() {
-      this.colorSwatches.forEach(swatch => {
-        swatch.addEventListener('mouseenter', function() {
-          this._setActiveColorImage(swatch);
-        }.bind(this));
-  
-        swatch.addEventListener('touchstart', function(evt) {
-          evt.preventDefault();
-          this._setActiveColorImage(swatch);
-        }.bind(this), {passive: true});
-  
-        swatch.addEventListener('mouseleave', function() {
-          this._removeActiveColorImage(swatch);
-        }.bind(this));
-      });
-    }
-  
-    _setActiveColorImage(swatch) {
-      var id = swatch.dataset.variantId;
-      var image = swatch.dataset.variantImage;
-  
-      // Unset all active swatch images
-      this.colorImages.forEach(el => {
-        el.classList.remove('is-active');
-      });
-  
-      // Unset all active swatches
-      this.colorSwatches.forEach(el => {
-        el.classList.remove('is-active');
-      });
-  
-      // Set active image and swatch
-      var imageEl = this.el.querySelector('.grid-product__color-image--' + id);
-      imageEl.style.backgroundImage = 'url(' + image + ')';
-      imageEl.classList.add('is-active');
-      swatch.classList.add('is-active');
-  
-      // Update product grid item href with variant URL
-      var variantUrl = swatch.dataset.url;
-      var gridItem = swatch.closest('.grid-item__link');
-  
-      if (gridItem) gridItem.setAttribute('href', variantUrl);
-    }
-  
-    _removeActiveColorImage(swatch) {
-      const id = swatch.dataset.variantId;
-      this.querySelector(`.grid-product__color-image--${id}`).classList.remove('is-active');
-    }
-  
-    /* Setup event listeners */
-    _bindEvents() {
-      this.buttons.forEach(button => {
-        const id = button.dataset.button;
-  
-        button.on('click', e => {
-          e.preventDefault();
-          e.stopPropagation();
-          this._showContent(id);
-        });
-      });
-  
-      // Display active hotspot block on theme editor select
-      document.addEventListener('shopify:block:select', (e) => {
-        const blockId = e.detail.blockId;
-        this._showContent(`${blockId}`);
-        this._setupQuickShop();
-      });
-    }
-  
-    /* Toggle sidebar content */
-    _showContent(id) {
-      // Hide all hotspotBlock
-      // Show the hotspotBlock with the id
-      this.hotspotBlocks.forEach((block) => {
-        if (block.dataset.hotspotBlock === id) {
-          block.classList.add('is-active');
-        } else {
-          block.classList.remove('is-active');
-        }
-      });
-    }
-  
-    _setupQuickShop() {
-      if (this.querySelectorAll('[data-block-type="product"]').length > 0) {
-        // Ensure we are utilizing the right version of QuickShop based off of theme
-        if (typeof theme.QuickShop === 'function') {
-          new theme.QuickShop(this.blockContainer);
-        } else if (typeof theme.initQuickShop === 'function') {
-          theme.initQuickShop();
-        }
-  
-        if (typeof theme.QuickAdd === 'function') {
-          new theme.QuickAdd(this.blockContainer);
-        }
-      }
-    }
-  }
-  
-  customElements.define('hot-spots', HotSpots);
-  
-  /*============================================================================
-    ImageCompare
-  ==============================================================================*/
-  
-  class ImageCompare extends HTMLElement {
-    constructor() {
-      super();
-      this.el = this;
-      this.sectionId = this.dataset.sectionId;
-      this.button = this.querySelector('[data-button]');
-      this.draggableContainer = this.querySelector('[data-draggable]');
-      this.primaryImage = this.querySelector('[data-primary-image]');
-      this.secondaryImage = this.querySelector('[data-secondary-image]');
-  
-      this.calculateSizes();
-  
-      this.active = false;
-      this.currentX = 0;
-      this.initialX = 0;
-      this.xOffset = 0;
-  
-      this.buttonOffset = this.button.offsetWidth / 2;
-  
-      this.el.addEventListener("touchstart", this.dragStart, false);
-      this.el.addEventListener("touchend", this.dragEnd, false);
-      this.el.addEventListener("touchmove", this.drag, false);
-  
-      this.el.addEventListener("mousedown", this.dragStart, false);
-      this.el.addEventListener("mouseup", this.dragEnd, false);
-      this.el.addEventListener("mousemove", this.drag, false);
-  
-      window.on('resize', theme.utils.debounce(250, () => { this.calculateSizes(true)}));
-  
-      document.addEventListener('shopify:section:load', event => {
-        if (event.detail.sectionId === this.sectionId) {
-          this.calculateSizes();
-        }
-      });
-    }
-  
-    calculateSizes(hasResized = false) {
-      this.active = false;
-      this.currentX = 0;
-      this.initialX = 0;
-      this.xOffset = 0;
-  
-      this.buttonOffset = this.button.offsetWidth / 2;
-  
-      this.elWidth = this.el.offsetWidth;
-  
-      this.button.style.transform = `translate(-${this.buttonOffset}px, -50%)`;
-      this.primaryImage.style.width = `${this.elWidth}px`;
-      if (hasResized) this.draggableContainer.style.width = `${this.elWidth/2}px`;
-    }
-  
-    dragStart(e) {
-      if (e.type === "touchstart") {
-        this.initialX = e.touches[0].clientX - this.xOffset;
-      } else {
-        this.initialX = e.clientX - this.xOffset;
-      }
-  
-      if (e.target === this.button) {
-        this.active = true;
-      }
-    }
-  
-    dragEnd(e) {
-      this.initialX = this.currentX;
-  
-      this.active = false;
-    }
-  
-    drag(e) {
-      if (this.active) {
-  
-        e.preventDefault();
-  
-        if (e.type === "touchmove") {
-          this.currentX = e.touches[0].clientX - this.initialX;
-        } else {
-          this.currentX = e.clientX - this.initialX;
-        }
-  
-        this.xOffset = this.currentX;
-        this.setTranslate(this.currentX, this.button);
-      }
-    }
-  
-    setTranslate(xPos, el) {
-      let newXpos = xPos - this.buttonOffset;
-      let newVal = (this.elWidth/2) + xPos;
-  
-      const boundaryPadding = 50;
-      const XposMin = (this.elWidth/2 + this.buttonOffset) * -1;
-      const XposMax = this.elWidth/2 - this.buttonOffset;
-  
-      // Set boundaries for dragging
-      if (newXpos < (XposMin + boundaryPadding)) {
-        newXpos = XposMin + boundaryPadding;
-        newVal = boundaryPadding
-      } else if (newXpos > (XposMax - boundaryPadding)) {
-        newXpos = XposMax - boundaryPadding;
-        newVal = this.elWidth - boundaryPadding;
-      }
-  
-      el.style.transform = `translate(${newXpos}px, -50%)`;
-      this.draggableContainer.style.width = `${newVal}px`;
-    }
-  }
-  
-  customElements.define('image-compare', ImageCompare);
-  
 
 
   theme.Blog = (function() {
@@ -7006,8 +6542,7 @@ lazySizesConfig.expFactor = 4;
       startingSlide: '.starting-slide',
       variantType: '.variant-wrapper',
       blocks: '[data-product-blocks]',
-      blocksHolder: '[data-blocks-holder]',
-      dynamicVariantsEnabled: '[data-dynamic-variants-enabled]',
+      blocksHolder: '[data-blocks-holder]'
     };
   
     function Product(container) {
@@ -7214,8 +6749,6 @@ lazySizesConfig.expFactor = 4;
           variants: this.variantsObject,
           dynamicVariantsEnabled
         };
-  
-        console.log(options);
   
         var swatches = this.container.querySelectorAll(this.selectors.variantColorSwatch);
         if (swatches.length) {
@@ -7731,7 +7264,13 @@ lazySizesConfig.expFactor = 4;
       },
   
       getThumbIndex: function(target) {
-        return target.dataset.index;
+        if (this.settings.stackedImages) {
+          return target.dataset.index
+        } else {
+          return Array.from(
+            target.parentElement.children
+          ).indexOf(target);
+        }
       },
   
       updateVariantImage: function(evt) {
